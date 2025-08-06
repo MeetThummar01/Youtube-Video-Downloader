@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>YouTube Downloader</title>
+</head>
+<body>
+  <h1>YouTube Downloader</h1>
+  <input id="urlInput" placeholder="Enter YouTube URL" size="50" />
+  <button onclick="fetchInfo()">Get Video Info</button>
+  <div id="info"></div>
+
+  <script>
+    async function fetchInfo() {
+      const url = document.getElementById("urlInput").value;
+      if (!url) {
+        alert("Please enter a URL");
+        return;
+      }
+      const infoDiv = document.getElementById("info");
+      infoDiv.innerHTML = "Loading...";
+
+      try {
+        const response = await fetch('/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url })
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch video info");
+
+        const data = await response.json();
+        if (data.error) {
+          infoDiv.innerHTML = "Error: " + data.error;
+          return;
+        }
+
+        let html = `<h3>${data.title}</h3><img src="${data.thumbnail}" width="300"/><br><b>Formats:</b><br><ul>`;
+        data.formats.forEach(f => {
+          if(f.format_note && f.url){
+            html += `<li><a href="${f.url}" target="_blank">Quality: ${f.format_note}, Ext: ${f.ext}</a></li>`;
+          }
+        });
+        html += "</ul>";
+        infoDiv.innerHTML = html;
+      } catch (e) {
+        infoDiv.innerHTML = "Error: " + e.message;
+      }
+    }
+  </script>
+</body>
+</html>
